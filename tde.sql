@@ -1,0 +1,68 @@
+USE master
+GO
+
+--- MASTER KEY OLUÞTURMA
+
+CREATE MASTER KEY ENCRYPTION
+BY PASSWORD='strongpassword';
+
+--- SERTÝFÝKA OLUÞTURMA
+
+CREATE CERTIFICATE cert_Login
+WITH SUBJECT = 'My TDE certificate'
+
+---VERÝ TABANI ÞÝFRELEME ANAHTARI (DEK) OLUÞTURMA
+
+USE Login
+GO
+
+CREATE DATABASE ENCRYPTION KEY
+WITH ALGORITHM=AES_128
+ENCRYPTION BY SERVER CERTIFICATE cert_Login;
+
+ALTER DATABASE Login
+	SET ENCRYPTION ON;
+BACKUP DATABASE Login
+TO DISK='C:\Program Files\Microsoft SQL Server\MSSQL15.MSSQLSERVER\MSSQL\Backup\loginbak.bak'
+GO
+
+USE master
+GO
+
+
+BACKUP MASTER KEY 
+TO FILE='C:\Program Files\Microsoft SQL Server\MSSQL15.MSSQLSERVER\MSSQL\Backup\Masterkey_Login'
+ENCRYPTION BY PASSWORD ='strongpassword';
+
+BACKUP CERTIFICATE cert_Login
+TO FILE = 'C:\Program Files\Microsoft SQL Server\MSSQL15.MSSQLSERVER\MSSQL\Backup\cert_Login.crt'
+WITH PRIVATE KEY
+(
+	 FILE = 'C:\Program Files\Microsoft SQL Server\MSSQL15.MSSQLSERVER\MSSQL\Backup\cert_Login.pvk',
+        ENCRYPTION BY PASSWORD = 'mystrongpassword'
+);
+
+BACKUP DATABASE Login
+TO DISK = 'C:\Program Files\Microsoft SQL Server\MSSQL15.MSSQLSERVER\MSSQL\Backup\loginbak.bak'
+GO
+
+DROP DATABASE Login
+GO
+DROP CERTIFICATE cert_Login
+GO
+DROP MASTER KEY;
+GO
+
+USE master
+GO
+
+CREATE MASTER KEY ENCRYPTION
+BY PASSWORD='mystrongpassword';
+
+CREATE CERTIFICATE cert_Login
+FROM FILE ='C:\Program Files\Microsoft SQL Server\MSSQL15.MSSQLSERVER\MSSQL\Backup\cert_Login.crt'
+WITH PRIVATE KEY
+(
+	 FILE = 'C:\Program Files\Microsoft SQL Server\MSSQL15.MSSQLSERVER\MSSQL\Backup\cert_Login.pvk',
+        DECRYPTION BY PASSWORD = 'strongpassword'
+);
